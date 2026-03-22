@@ -7,9 +7,11 @@ function M:entry(job)
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
       selected=$(
         fzf \
+          --disabled \
           --height=100% \
           --scheme=path \
-          --bind "start:reload:fd . \"$root\" -t f -t l --exclude .git --max-depth 6 | sed \"s|$root/||\"" \
+          --bind "start:reload:echo ''" \
+          --bind "change:reload:[ -z {q} ] && echo '' || fd . \"$root\" -t f -t l --exclude .git --max-depth 6 | sed \"s|$root/||\" | fzf --filter={q}" \
           --prompt "fd> " \
           --preview "bat --style=numbers,changes --color=always '$root/{}' 2>/dev/null || ls --color=always '$root/{}'" \
           --preview-window=right:55%:border-left
