@@ -8,35 +8,56 @@ function M:entry(job)
     script = [[
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
       selected=$(
-        fd . "$root" -t f --hidden --exclude .git --max-depth 5 \
+        fd . "$root" -t f -t l \
+          --exclude .git \
+          --max-depth 6 \
           | sed "s|$root/||" \
           | fzf \
               --height=100% \
               --scheme=path \
               --preview "bat --style=numbers,changes --color=always '$root/{}' 2>/dev/null || ls --color=always '$root/{}'" \
               --preview-window=right:55%:border-left
-      )
+      ) || true
       [ -n "$selected" ] && ya emit reveal "$root/$selected"
     ]]
-
   elseif mode == "rg" then
+    -- Store rg command in a temp file to avoid variable expansion issues
+    -- inside fzf's bind strings. This is the canonical fix for {q} quoting.
     script = [[
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
       cd "$root" || exit 1
-      RG="rg --column --line-number --no-heading --color=always --smart-case --hidden --glob=!.git"
+
+      # Write the rg command to a temp script so fzf bind strings
+      # don't have to deal with quoting/expansion of $RG at all
+      rg_script=$(mktemp)
+      chmod +x "$rg_script"
+      cat > "$rg_script" << 'EOF'
+#!/bin/sh
+rg \
+  --column \
+  --line-number \
+  --no-heading \
+  --color=always \
+  --smart-case \
+  --glob '!.git' \
+  -- "$@" .
+EOF
+
       selected=$(
         fzf \
           --disabled --ansi \
           --height=100% \
-          --bind "start:reload:$RG {q} || true" \
-          --bind "change:reload:$RG {q} || true" \
-          --bind "ctrl-f:unbind(change,ctrl-f)+enable-search+transform-prompt(echo 'fzf> ')+transform-search-query()" \
-          --bind "ctrl-r:unbind(ctrl-r)+disable-search+transform-prompt(echo 'rg> ')+reload:$RG {q} || true+rebind(change,ctrl-f)" \
+          --bind "start:reload:\"$rg_script\" {q} || true" \
+          --bind "change:reload:\"$rg_script\" {q} || true" \
+          --bind "ctrl-f:unbind(change,ctrl-f)+enable-search+change-prompt(fzf> )" \
+          --bind "ctrl-r:unbind(ctrl-r)+disable-search+change-prompt(rg> )+reload:\"$rg_script\" {q} || true+rebind(change,ctrl-f)" \
           --prompt "rg> " \
           --delimiter : \
           --preview "bat --style=numbers --color=always --highlight-line {2} {1} 2>/dev/null" \
           --preview-window "right:55%:border-left:+{2}+3/3:~3"
-      )
+      ) || true
+
+      rm -f "$rg_script"
       [ -n "$selected" ] && ya emit reveal "$root/$(echo "$selected" | cut -d: -f1)"
     ]]
   end
