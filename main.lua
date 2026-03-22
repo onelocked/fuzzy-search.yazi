@@ -14,7 +14,7 @@ function M:entry(job)
           --height=100% \
           --scheme=path \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6 {q}" \
+          --bind "change:reload:([ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6 {q}) || true" \
           --prompt "fd> " \
           --preview "if [ -z {} ]; then
             eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes .
@@ -37,7 +37,7 @@ function M:entry(job)
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || rg --column --line-number --no-heading --color=always --smart-case --glob '!.git' -- {q} ." \
+          --bind "change:reload:([ -z {q} ] && echo '' || rg --column --line-number --no-heading --color=always --smart-case --glob '!.git' -- {q} .) || true" \
           --preview "if [ -z {} ]; then
             eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes .
           else
