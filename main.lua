@@ -13,7 +13,7 @@ function M:entry(job)
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || fd . \"$root\" -t f -t l --exclude .git --max-depth 6 | sed \"s|$root/||\" | fzf --filter={q}" \
           --prompt "fd> " \
-          --preview "[ -z {} ] && eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes \"$root\" || bat --style=numbers,changes --color=always \"$root/{}\" 2>/dev/null || eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes \"$root/{}\"" \
+          --preview "if [ -z {q} ]; then eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes \"$root\"; else bat --style=numbers,changes --color=always \"$root/{}\" 2>/dev/null || eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes \"$root/{}\"; fi" \
           --preview-window=right:55%:border-left
       )
       [ -n "$selected" ] && ya emit reveal "$root/$selected"
