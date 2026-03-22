@@ -1,22 +1,18 @@
 local M = {}
-
 function M:entry(job)
   local mode = job.args and job.args[1] or "fd"
   local script
-
   if mode == "fd" then
     script = [[
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
       selected=$(
-        fd . "$root" -t f -t l \
-          --exclude .git \
-          --max-depth 6 \
-          | sed "s|$root/||" \
-          | fzf \
-              --height=100% \
-              --scheme=path \
-              --preview "bat --style=numbers,changes --color=always '$root/{}' 2>/dev/null || ls --color=always '$root/{}'" \
-              --preview-window=right:55%:border-left
+        fzf \
+          --height=100% \
+          --scheme=path \
+          --bind "start:reload:fd . \"$root\" -t f -t l --exclude .git --max-depth 6 | sed \"s|$root/||\"" \
+          --prompt "fd> " \
+          --preview "bat --style=numbers,changes --color=always '$root/{}' 2>/dev/null || ls --color=always '$root/{}'" \
+          --preview-window=right:55%:border-left
       )
       [ -n "$selected" ] && ya emit reveal "$root/$selected"
       exit 0
@@ -29,6 +25,9 @@ function M:entry(job)
       chmod +x "$rg_script"
       cat > "$rg_script" << 'EOF'
 #!/bin/sh
+if [ -z "$1" ]; then
+  exit 0
+fi
 rg \
   --column \
   --line-number \
@@ -56,7 +55,6 @@ EOF
       exit 0
     ]]
   end
-
   ya.emit("shell", { script, block = true })
 end
 
