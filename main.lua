@@ -17,18 +17,14 @@ function M:entry(job)
               --scheme=path \
               --preview "bat --style=numbers,changes --color=always '$root/{}' 2>/dev/null || ls --color=always '$root/{}'" \
               --preview-window=right:55%:border-left
-      ) || true
+      )
       [ -n "$selected" ] && ya emit reveal "$root/$selected"
+      exit 0
     ]]
   elseif mode == "rg" then
-    -- Store rg command in a temp file to avoid variable expansion issues
-    -- inside fzf's bind strings. This is the canonical fix for {q} quoting.
     script = [[
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
-      cd "$root" || exit 1
-
-      # Write the rg command to a temp script so fzf bind strings
-      # don't have to deal with quoting/expansion of $RG at all
+      cd "$root" || exit 0
       rg_script=$(mktemp)
       chmod +x "$rg_script"
       cat > "$rg_script" << 'EOF'
@@ -42,7 +38,6 @@ rg \
   --glob '!.git' \
   -- "$@" .
 EOF
-
       selected=$(
         fzf \
           --disabled --ansi \
@@ -55,14 +50,14 @@ EOF
           --delimiter : \
           --preview "bat --style=numbers --color=always --highlight-line {2} {1} 2>/dev/null" \
           --preview-window "right:55%:border-left:+{2}+3/3:~3"
-      ) || true
-
+      )
       rm -f "$rg_script"
       [ -n "$selected" ] && ya emit reveal "$root/$(echo "$selected" | cut -d: -f1)"
+      exit 0
     ]]
   end
 
-  ya.emit("shell", { script, block = true, confirm = true })
+  ya.emit("shell", { script, block = true })
 end
 
 return M
