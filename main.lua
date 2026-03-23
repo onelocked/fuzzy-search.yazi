@@ -44,7 +44,7 @@ function M:entry(job)
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
+          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
