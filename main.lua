@@ -1,7 +1,11 @@
 local M = {}
-
 function M:entry(job)
   local mode = job.args and job.args[1] or "fd"
+
+  local tl_depth = job.args.TL and tostring(job.args.TL) or "3"
+
+  local bat_style = "plain"
+
   local script
 
   if mode == "fd" then
@@ -17,9 +21,12 @@ function M:entry(job)
           --bind "change:reload:[ -z {q} ] && echo '' || (fd --type f --type l --exclude .git --max-depth 6 | fzf --filter={q}) || true" \
           --prompt "fd> " \
           --preview "if [ -z {} ]; then
-            eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes .
+            eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
-            bat --style=numbers,changes --color=always {} 2>/dev/null || eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes {}
+            bat --style=]] ..
+        bat_style ..
+        [[ --color=always {} 2>/dev/null || eza -TL=]] ..
+        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
           fi" \
           --preview-window=right:55%:border-left
       )
@@ -39,9 +46,9 @@ function M:entry(job)
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --preview "if [ -z {} ]; then
-            eza -TL=3 --color=always --icons=always --group-directories-first --no-quotes .
+            eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
-            bat --style=numbers --color=always --highlight-line {2} {1} 2>/dev/null
+            bat --style=]] .. bat_style .. [[ --color=always --highlight-line {2} {1} 2>/dev/null
           fi" \
           --preview-window "right:55%:border-left:+{2}+3/3:~3"
       )
