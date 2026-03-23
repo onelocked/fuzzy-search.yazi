@@ -15,9 +15,9 @@ function M:entry(job)
           --disabled \
           --height=100% \
           --scheme=path \
-          --bind "start:reload:fd --type f --type l --exclude .git --max-depth 6" \
-          --bind "change:reload:[ -z {q} ] && fd --type f --type l --exclude .git --max-depth 6 || fd --type f --type l --exclude .git --max-depth 6 {q}" \
           --prompt "fd> " \
+          --bind "start:reload:echo ''" \
+          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6 {q}" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
@@ -42,7 +42,7 @@ function M:entry(job)
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ ${#1} -lt 3 ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
+          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
