@@ -17,6 +17,7 @@ function M:entry(job)
           --info=inline-right \
           --scheme=path \
           --prompt "  Find Files: ➜ " \
+          --pointer="▶" \
           --separator "─" \
           --scrollbar "│" \
           --border="rounded" \
@@ -62,6 +63,7 @@ function M:entry(job)
           --layout=reverse \
           --info=inline-right \
           --prompt "  Ripgrep: ➜ " \
+          --pointer="▶" \
           --separator "─" \
           --scrollbar "│" \
           --border="rounded" \
