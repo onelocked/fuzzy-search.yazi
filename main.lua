@@ -1,13 +1,11 @@
 local M = {}
+
 function M:entry(job)
   local mode = job.args and job.args[1] or "fd"
-
   local tl_depth = job.args.TL and tostring(job.args.TL) or "3"
-
   local bat_style = "plain"
 
   local script
-
   if mode == "fd" then
     script = [[
       root=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
@@ -17,16 +15,16 @@ function M:entry(job)
           --disabled \
           --height=100% \
           --scheme=path \
-          --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || (fd --type f --type l --exclude .git --max-depth 6 | fzf --filter={q}) || true" \
+          --bind "start:reload:fd --type f --type l --exclude .git --max-depth 6" \
+          --bind "change:reload:[ -z {q} ] && fd --type f --type l --exclude .git --max-depth 6 || fd --type f --type l --exclude .git --max-depth 6 {q}" \
           --prompt "fd> " \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
             bat --style=]] ..
-        bat_style ..
-        [[ --color=always {} 2>/dev/null || eza -TL=]] ..
-        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
+    bat_style ..
+    [[ --color=always {} 2>/dev/null || eza -TL=]] ..
+    tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
           fi" \
           --preview-window=right:55%:border-left
       )
@@ -44,7 +42,7 @@ function M:entry(job)
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
+          --bind "change:reload:[ ${#1} -lt 3 ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
