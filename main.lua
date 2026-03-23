@@ -12,12 +12,13 @@ function M:entry(job)
       cd "$root" || exit 1
       selected=$(
         fzf \
-          --disabled \
           --height=100% \
           --scheme=path \
+          --tiebreak=end,length,index \
+          --layout=reverse \
           --prompt "fd> " \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6 {q}" \
+          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
@@ -39,6 +40,7 @@ function M:entry(job)
         fzf \
           --ansi --disabled \
           --height=100% \
+          --layout=reverse \
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
