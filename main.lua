@@ -16,7 +16,7 @@ function M:entry(job)
           --layout=reverse \
           --info=inline-right \
           --scheme=path \
-          --prompt "  Find Files: ➜ " \
+          --prompt " Find Files: ➜ " \
           --pointer="▶" \
           --separator "─" \
           --scrollbar "│" \
@@ -62,7 +62,7 @@ function M:entry(job)
           --height=100% \
           --layout=reverse \
           --info=inline-right \
-          --prompt "  Ripgrep: ➜ " \
+          --prompt " Ripgrep: ➜ " \
           --pointer="▶" \
           --separator "─" \
           --scrollbar "│" \
@@ -98,6 +98,37 @@ function M:entry(job)
           ya emit reveal "$root/$file"
           ;;
       esac
+    ]]
+  elseif mode == "zoxide" then
+    script = [[
+      result=$(
+        zoxide query -ls 2>/dev/null \
+        | awk -v home="$HOME" '{w=8-length($1); pad=""; for(i=0;i<w;i++) pad=pad" "; display=$NF; sub("^" home, "~", display); print pad $1 " │ " display "\t" $NF}' \
+        | fzf \
+            --ansi \
+            --no-sort \
+            --height=100% \
+            --layout=reverse \
+            --info=inline-right \
+            --scheme=path \
+            --delimiter='\t' \
+            --with-nth=1 \
+            --prompt "󰰷 Zoxide: ➜ " \
+            --pointer="▶" \
+            --separator "─" \
+            --scrollbar "│" \
+            --border="rounded" \
+            --padding="1,2" \
+            --header "   Rank │  Directory" \
+            --bind "ctrl-j:down,ctrl-k:up" \
+            --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+            --preview 'eza -TL=]] ..
+        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {2} 2>/dev/null || ls {2}' \
+            --preview-window="right:57%:border-left" \
+        | cut -f2
+      )
+      [ -z "$result" ] && exit 0
+      ya emit cd "$result"
     ]]
   end
   ya.emit("shell", { script, block = true })
