@@ -19,14 +19,14 @@ function M:entry(job)
           --tiebreak=length,begin \
           --prompt "fd> " \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6" \
+          --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude '.*' --max-depth 6" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
             bat --style=]] ..
-    bat_style ..
-    [[ --color=always {} 2>/dev/null || eza -TL=]] ..
-    tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
+        bat_style ..
+        [[ --color=always {} 2>/dev/null || eza -TL=]] ..
+        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
           fi" \
           --preview-window=right:55%:border-left
       )
@@ -46,7 +46,7 @@ function M:entry(job)
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
-          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.git' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
+          --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.*' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --preview "if [ -z {} ]; then
             eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
           else
