@@ -13,9 +13,10 @@ function M:entry(job)
       selected=$(
         fzf \
           --height=100% \
-          --scheme=path \
-          --tiebreak=end,length,index \
           --layout=reverse \
+          --info=inline \
+          --scheme=path \
+          --tiebreak=length,begin \
           --prompt "fd> " \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude .git --max-depth 6" \
@@ -41,6 +42,7 @@ function M:entry(job)
           --ansi --disabled \
           --height=100% \
           --layout=reverse \
+          --info=inline \
           --prompt "rg> " \
           --delimiter : \
           --bind "start:reload:echo ''" \
