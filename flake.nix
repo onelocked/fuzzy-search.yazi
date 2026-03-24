@@ -38,7 +38,7 @@
           ...
         }:
         import ./nix/hm-module.nix {
-          inherit config lib;
+          inherit pkgs config lib;
           fuzzy-search-pkgs = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
     };

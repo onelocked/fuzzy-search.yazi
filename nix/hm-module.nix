@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   fuzzy-search-pkgs,
   ...
 }:
@@ -37,6 +38,15 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = [
+      pkgs.fzf
+      pkgs.eza
+      pkgs.bat
+    ]
+    ++ lib.optional cfg.keymaps.fd pkgs.fd
+    ++ lib.optional cfg.keymaps.rg pkgs.ripgrep
+    ++ lib.optional cfg.keymaps.zoxide pkgs.zoxide;
+
     programs.yazi.plugins = {
       fuzzy-search = cfg.package;
     };
