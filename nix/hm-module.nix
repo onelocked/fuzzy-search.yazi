@@ -24,6 +24,8 @@ in
       description = "The maximum depth for the search (sets the --TL flag).";
     };
 
+    enableFishIntegration = lib.mkEnableOption "Fish shell integration for fuzzy-zoxide search";
+
     keymaps = {
       fd = lib.mkOption {
         type = lib.types.bool;
@@ -44,17 +46,66 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # Ensure all binaries used in the Fish script and Yazi plugin are available
     home.packages = [
       pkgs.fzf
       pkgs.eza
       pkgs.bat
+      pkgs.gawk
     ]
-    ++ lib.optional cfg.keymaps.fd pkgs.fd
-    ++ lib.optional cfg.keymaps.rg pkgs.ripgrep
-    ++ lib.optional cfg.keymaps.zoxide pkgs.zoxide;
+    ++ lib.optional (cfg.keymaps.fd) pkgs.fd
+    ++ lib.optional (cfg.keymaps.rg) pkgs.ripgrep
+    ++ lib.optional (cfg.keymaps.zoxide || cfg.enableFishIntegration) pkgs.zoxide;
 
     programs.yazi.plugins = {
       fuzzy-search = cfg.package;
+    };
+
+    programs.fish = lib.mkIf cfg.enableFishIntegration {
+      functions."__yazi-fuzzy-zoxide" = {
+        description = "Fuzzy search zoxide results and open in Yazi";
+        body = # fish
+          ''
+            set -l dir (
+              zoxide query -ls 2>/dev/null \
+              | awk -v home="$HOME" '{
+                  score = $1
+                  sub(/^[ \t]*[0-9.]+[ \t]+/, "", $0)
+                  orig = $0
+                  sub("^" home, "~", $0)
+
+                  green = "\033[32m"
+                  dim   = "\033[2m"
+                  reset = "\033[0m"
+
+                  printf "%s%6s %s│%s  %s\t%s\n", green, score, reset dim, reset, $0, orig
+              }' \
+              | fzf \
+                  --ansi --no-sort --height=100% --layout=reverse --info=inline-right \
+                  --scheme=path --delimiter='\t' --with-nth=1 \
+                  --prompt "󰰷 Zoxide: ➜ " --pointer="▶" --separator "─" \
+                  --scrollbar "│" --border="rounded" --padding="1,2" \
+                  --header " Rank │  Directory" \
+                  --preview 'eza -TL=${toString cfg.depth} --color=always --icons {2} 2>/dev/null || ls {2}' \
+                  --preview-window="right:50%:wrap" \
+                  --bind "ctrl-j:down,ctrl-k:up" \
+                  --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
+              | cut -f2 | string trim
+            )
+
+            if test -n "$dir"
+                cd "$dir"
+                ${config.programs.yazi.shellWrapperName}
+                zoxide add "$dir"
+            end
+            commandline -f repaint
+          '';
+      };
+
+      interactiveShellInit = ''
+        bind Z __yazi-fuzzy-zoxide
+        bind -M insert Z __yazi-fuzzy-zoxide
+      '';
     };
 
     programs.yazi.keymap = lib.mkIf (cfg.keymaps.fd || cfg.keymaps.rg || cfg.keymaps.zoxide) {
