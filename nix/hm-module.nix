@@ -86,8 +86,12 @@ in
                   --prompt "󰰷 Zoxide: ➜ " --pointer="▶" --separator "─" \
                   --scrollbar "│" --border="rounded" --padding="1,2" \
                   --header " Rank │  Directory" \
-                  --preview 'eza -TL=${toString cfg.depth} --color=always --icons {2} 2>/dev/null || ls {2}' \
-                  --preview-window="right:50%:wrap" \
+                  --preview '
+                      printf "   Tree Structure\n";
+                      printf "  \033[2m────────────────\033[0m\n";
+                      eza -TL=3 --color=always --icons {2} 2>/dev/null | tail -n +2
+                  ' \
+                  --preview-window="right:50%:wrap:border-left" \
                   --bind "ctrl-j:down,ctrl-k:up" \
                   --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
               | cut -f2 | string trim
@@ -96,7 +100,6 @@ in
             if test -n "$dir"
                 cd "$dir"
                 ${config.programs.yazi.shellWrapperName}
-                zoxide add "$dir"
             end
             commandline -f repaint
           '';
