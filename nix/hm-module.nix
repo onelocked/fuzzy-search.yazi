@@ -18,6 +18,12 @@ in
       description = "The fuzzy-search yazi plugin package.";
     };
 
+    depth = lib.mkOption {
+      type = lib.types.int;
+      default = 3;
+      description = "The maximum depth for the search (sets the --TL flag).";
+    };
+
     keymaps = {
       fd = lib.mkOption {
         type = lib.types.bool;
@@ -55,17 +61,17 @@ in
       mgr.prepend_keymap =
         (lib.optional cfg.keymaps.fd {
           on = [ "z" ];
-          run = "plugin fuzzy-search -- fd --TL=3";
+          run = "plugin fuzzy-search -- fd --TL=${toString cfg.depth}";
           desc = "Fuzzy Find Files";
         })
         ++ (lib.optional cfg.keymaps.rg {
           on = [ "<S-s>" ];
-          run = "plugin fuzzy-search -- rg --TL=3";
+          run = "plugin fuzzy-search -- rg --TL=${toString cfg.depth}";
           desc = "Ripgrep Search";
         })
         ++ (lib.optional cfg.keymaps.zoxide {
           on = [ "<S-z>" ];
-          run = "plugin fuzzy-search -- zoxide --TL=3";
+          run = "plugin fuzzy-search -- zoxide --TL=${toString cfg.depth}";
           desc = "Zoxide Search";
         });
     };
