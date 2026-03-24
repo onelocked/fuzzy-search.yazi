@@ -6,10 +6,10 @@
   ...
 }:
 let
-  cfg = config.programs.yazi.fuzzy-search;
+  cfg = config.programs.yazi.yaziPlugins.plugins.fuzzy-search;
 in
 {
-  options.programs.yazi.fuzzy-search = {
+  options.programs.yazi.yaziPlugins.plugins.fuzzy-search = {
     enable = lib.mkEnableOption "fuzzy-search yazi plugin";
 
     package = lib.mkOption {
