@@ -5,6 +5,12 @@ function M:entry(job)
   local tl_depth = job.args.TL and tostring(job.args.TL) or "3"
   local bat_style = "plain"
 
+  local function get_tree_cmd(target)
+    return 'printf "   Tree Structure\\n  \\033[2m────────────────\\033[0m\\n"; eza -TL=' ..
+        tl_depth ..
+        ' --color=always --icons=always --group-directories-first --no-quotes ' .. target .. ' 2>/dev/null | tail -n +2'
+  end
+
   local script
   if mode == "fd" then
     script = [[
@@ -12,44 +18,22 @@ function M:entry(job)
       cd "$root" || exit 1
       result=$(
         fzf \
-          --height=100% \
-          --layout=reverse \
-          --info=inline-right \
-          --scheme=path \
-          --prompt " Find Files: ➜ " \
-          --pointer="▶" \
-          --separator "─" \
-          --scrollbar "│" \
-          --border="rounded" \
-          --padding="1,2" \
+          --height=100% --layout=reverse --info=inline-right --scheme=path \
+          --prompt " Find Files: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
           --header " ENTER: Show File |  CTRL-E: Edit" \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude '.*' --max-depth 6" \
           --bind "ctrl-j:down,ctrl-k:up" \
-          --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
           --bind "ctrl-e:become(echo EDIT:{})" \
-          --preview "if [ -z {} ]; then
-            eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
-          else
-            bat --style=]] ..
-        bat_style ..
-        [[ --color=always {} 2>/dev/null || eza -TL=]] ..
-        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {}
-          fi" \
-          --preview-window="right:57%:border-left"
+          --preview 'if [ -z {} ]; then ]] ..
+        get_tree_cmd(".") ..
+        [[; else bat --style=]] .. bat_style .. [[ --color=always {} 2>/dev/null || ]] .. get_tree_cmd("{}") .. [[; fi' \
+          --preview-window="right:50%:wrap:border-left"
       )
-
       [ -z "$result" ] && exit 0
-
       case "$result" in
-        EDIT:*)
-          file="${result#EDIT:}"
-          ya emit reveal "$root/$file"
-          ${EDITOR:-nvim} "$root/$file"
-          ;;
-        *)
-          ya emit reveal "$root/$result"
-          ;;
+        EDIT:*) file="${result#EDIT:}"; ya emit reveal "$root/$file"; ${EDITOR:-nvim} "$root/$file" ;;
+        *) ya emit reveal "$root/$result" ;;
       esac
     ]]
   elseif mode == "rg" then
@@ -58,73 +42,42 @@ function M:entry(job)
       cd "$root" || exit 1
       result=$(
         fzf \
-          --ansi --disabled \
-          --height=100% \
-          --layout=reverse \
-          --info=inline-right \
-          --prompt " Ripgrep: ➜ " \
-          --pointer="▶" \
-          --separator "─" \
-          --scrollbar "│" \
-          --border="rounded" \
-          --padding="1,2" \
-          --header " ENTER: Show File |  CTRL-E: Edit" \
-          --delimiter : \
+          --ansi --disabled --height=100% --layout=reverse --info=inline-right \
+          --prompt " Ripgrep: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
+          --header " ENTER: Show File |  CTRL-E: Edit" --delimiter : \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.*' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --bind "ctrl-j:down,ctrl-k:up" \
-          --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
           --bind "ctrl-e:become(echo EDIT:{})" \
-          --preview "if [ -z {} ]; then
-            eza -TL=]] .. tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes .
-          else
-            bat --style=]] .. bat_style .. [[ --color=always --highlight-line {2} {1} 2>/dev/null
-          fi" \
-          --preview-window="right:57%:border-left:+{2}+3/3:~3"
+          --preview 'if [ -z {} ]; then ]] ..
+        get_tree_cmd(".") ..
+        [[; else bat --style=]] ..
+        bat_style .. [[ --color=always --highlight-line {2} {1} 2>/dev/null || ]] .. get_tree_cmd("{1}") .. [[; fi' \
+          --preview-window="right:50%:wrap:border-left:+{2}+3/3:~3"
       )
-
       [ -z "$result" ] && exit 0
-
       case "$result" in
-        EDIT:*)
-          selection="${result#EDIT:}"
-          file=$(echo "$selection" | cut -d: -f1)
-          line=$(echo "$selection" | cut -d: -f2)
-          ya emit reveal "$root/$file"
-          ${EDITOR:-nvim} "+$line" "$root/$file"
-          ;;
-        *)
-          file=$(echo "$result" | cut -d: -f1)
-          ya emit reveal "$root/$file"
-          ;;
+        EDIT:*) selection="${result#EDIT:}"; file=$(echo "$selection" | cut -d: -f1); line=$(echo "$selection" | cut -d: -f2); ya emit reveal "$root/$file"; ${EDITOR:-nvim} "+$line" "$root/$file" ;;
+        *) file=$(echo "$result" | cut -d: -f1); ya emit reveal "$root/$file" ;;
       esac
     ]]
   elseif mode == "zoxide" then
     script = [[
       result=$(
         zoxide query -ls 2>/dev/null \
-        | awk -v home="$HOME" '{w=8-length($1); pad=""; for(i=0;i<w;i++) pad=pad" "; display=$NF; sub("^" home, "~", display); print pad $1 " │ " display "\t" $NF}' \
+        | awk -v home="$HOME" '{
+            w=8-length($1); pad=""; for(i=0;i<w;i++) pad=pad" ";
+            display=$NF; sub("^" home, "~", display);
+            # \033[32m is Green, \033[0m resets it
+            print pad "\033[32m" $1 "\033[0m │ " display "\t" $NF
+          }' \
         | fzf \
-            --ansi \
-            --no-sort \
-            --height=100% \
-            --layout=reverse \
-            --info=inline-right \
-            --scheme=path \
-            --delimiter='\t' \
-            --with-nth=1 \
-            --prompt "󰰷 Zoxide: ➜ " \
-            --pointer="▶" \
-            --separator "─" \
-            --scrollbar "│" \
-            --border="rounded" \
-            --padding="1,2" \
+            --ansi --no-sort --height=100% --layout=reverse --info=inline-right --scheme=path --delimiter='\t' --with-nth=1 \
+            --prompt "󰰷 Zoxide: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
             --header "   Rank │  Directory" \
             --bind "ctrl-j:down,ctrl-k:up" \
-            --bind "ctrl-d:preview-half-page-down,ctrl-u:preview-half-page-up" \
-            --preview 'eza -TL=]] ..
-        tl_depth .. [[ --color=always --icons=always --group-directories-first --no-quotes {2} 2>/dev/null || ls {2}' \
-            --preview-window="right:57%:border-left" \
+            --preview ']] .. get_tree_cmd("{2}") .. [[' \
+            --preview-window="right:50%:wrap:border-left" \
         | cut -f2
       )
       [ -z "$result" ] && exit 0
