@@ -30,5 +30,16 @@
       packages = forEachPkgs (pkgs: {
         default = pkgs.callPackage fuzzy-search { };
       });
+      homeManagerModules.default =
+        {
+          pkgs,
+          config,
+          lib,
+          ...
+        }:
+        import ./nix/hm-module.nix {
+          inherit config lib;
+          fuzzy-search-pkgs = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+        };
     };
 }
