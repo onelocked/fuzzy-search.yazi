@@ -23,7 +23,10 @@
         pkgs.yaziPlugins.mkYaziPlugin {
           pname = "fuzzy-search.yazi";
           version = self.shortRev or self.dirtyShortRev or "dirty";
-          src = ./src;
+          src = lib.cleanSourceWith {
+            src = ./.;
+            filter = name: type: (baseNameOf name == "main.lua");
+          };
         };
     in
     {
