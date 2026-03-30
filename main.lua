@@ -20,11 +20,12 @@ function M:entry(job)
         fzf \
           --height=100% --layout=reverse --info=inline-right --scheme=path \
           --prompt " Find Files: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
-          --header " ENTER: Show File |  CTRL-E: Edit" \
+          --header " ENTER: Edit |  CTRL-E: Show File" \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude '.*' --max-depth 6" \
           --bind "ctrl-j:down,ctrl-k:up" \
-          --bind "ctrl-e:become(echo EDIT:{})" \
+          --bind "enter:become(echo EDIT:{})" \
+          --bind "ctrl-e:become(echo REVEAL:{})" \
           --preview 'if [ -z {} ]; then ]] ..
         get_tree_cmd(".") ..
         [[; else bat --style=]] .. bat_style .. [[ --color=always {} 2>/dev/null || ]] .. get_tree_cmd("{}") .. [[; fi' \
@@ -33,7 +34,7 @@ function M:entry(job)
       [ -z "$result" ] && exit 0
       case "$result" in
         EDIT:*) file="${result#EDIT:}"; ya emit reveal "$root/$file"; ${EDITOR:-nvim} "$root/$file" ;;
-        *) ya emit reveal "$root/$result" ;;
+        REVEAL:*) file="${result#REVEAL:}"; ya emit reveal "$root/$file" ;;
       esac
     ]]
   elseif mode == "rg" then
@@ -44,11 +45,12 @@ function M:entry(job)
         fzf \
           --ansi --disabled --height=100% --layout=reverse --info=inline-right \
           --prompt " Ripgrep: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
-          --header " ENTER: Show File |  CTRL-E: Edit" --delimiter : \
+          --header " ENTER: Edit |  CTRL-E: Show File" --delimiter : \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.*' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
           --bind "ctrl-j:down,ctrl-k:up" \
-          --bind "ctrl-e:become(echo EDIT:{})" \
+          --bind "enter:become(echo EDIT:{})" \
+          --bind "ctrl-e:become(echo REVEAL:{})" \
           --preview 'if [ -z {} ]; then ]] ..
         get_tree_cmd(".") ..
         [[; else bat --style=]] ..
@@ -58,7 +60,7 @@ function M:entry(job)
       [ -z "$result" ] && exit 0
       case "$result" in
         EDIT:*) selection="${result#EDIT:}"; file=$(echo "$selection" | cut -d: -f1); line=$(echo "$selection" | cut -d: -f2); ya emit reveal "$root/$file"; ${EDITOR:-nvim} "+$line" "$root/$file" ;;
-        *) file=$(echo "$result" | cut -d: -f1); ya emit reveal "$root/$file" ;;
+        REVEAL:*) selection="${result#REVEAL:}"; file=$(echo "$selection" | cut -d: -f1); ya emit reveal "$root/$file" ;;
       esac
     ]]
   elseif mode == "zoxide" then
