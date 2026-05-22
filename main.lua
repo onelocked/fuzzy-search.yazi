@@ -19,7 +19,7 @@ function M:entry(job)
       result=$(
         fzf \
           --height=100% --layout=reverse --info=inline-right --scheme=path \
-          --prompt " Find Files: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
+          --prompt " Find Files: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --padding="1,2" \
           --header " ENTER: Edit |  CTRL-E: Show File" \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || fd --type f --type l --exclude '.*' --max-depth 6" \
@@ -44,7 +44,7 @@ function M:entry(job)
       result=$(
         fzf \
           --ansi --disabled --height=100% --layout=reverse --info=inline-right \
-          --prompt " Ripgrep: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
+          --prompt " Ripgrep: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --padding="1,2" \
           --header " ENTER: Edit |  CTRL-E: Show File" --delimiter : \
           --bind "start:reload:echo ''" \
           --bind "change:reload:[ -z {q} ] && echo '' || (rg --column --line-number --no-heading --color=always --smart-case --sort path --glob '!.*' -- $(echo {q} | sed 's/ /.*/g') .) || true" \
@@ -75,7 +75,7 @@ function M:entry(job)
           }' \
         | fzf \
             --ansi --no-sort --height=100% --layout=reverse --info=inline-right --scheme=path --delimiter='\t' --with-nth=1 \
-            --prompt "󰰷 Zoxide: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --border="rounded" --padding="1,2" \
+            --prompt "󰰷 Zoxide: ➜ " --pointer="▶" --separator "─" --scrollbar "│" --padding="1,2" \
             --header "   Rank │  Directory" \
             --bind "ctrl-j:down,ctrl-k:up" \
             --preview ']] .. get_tree_cmd("{2}") .. [[' \
